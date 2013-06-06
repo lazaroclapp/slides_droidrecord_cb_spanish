@@ -1,0 +1,26 @@
+body {
+    overflow: auto;
+}
+
+#myFace {
+    position:absolute;
+    float:right;
+    bottom:0;
+    right:0;
+    width:20%;
+    height:30%;
+    background-color:#FF0000;
+    z-index:300000;
+}
+
+.deemphasize {
+    opacity:0.5;
+}
+
+canvas {
+    -webkit-box-reflect: below 0px -webkit-linear-gradient(bottom, rgba(255,255,255,0.3) 0%, transparent 40%, transparent 100%);
+}
+
+img {  
+    -webkit-box-reflect: below 0px -webkit-linear-gradient(bottom, rgba(255,255,255,0.3) 0%, transparent 40%, transparent 100%);
+}  

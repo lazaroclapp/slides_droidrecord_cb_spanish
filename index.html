@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 
 	<head>
 		<meta charset="utf-8">
 
-		<title>reveal.js - The HTML Presentation Framework</title>
+		<title>Detección y modelado de retrollamadas (callbacks) mediante instrumentación de código en Android</title>
 
-		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
-		<meta name="author" content="Hakim El Hattab">
+		<meta name="description" content="Presentación para el Segundo Congreso Estudiantil de Ciencias de la Computación">
+		<meta name="author" content="Lázaro Clapp">
 
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -17,6 +17,8 @@
 		<link rel="stylesheet" href="css/reveal.min.css">
 		<link rel="stylesheet" href="css/theme/default.css" id="theme">
 
+        <link rel="stylesheet" href="css/customcss/presentation.css"/>
+        
 		<!-- For syntax highlighting -->
 		<link rel="stylesheet" href="lib/css/zenburn.css">
 
@@ -24,6 +26,83 @@
 		<script>
 			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
 		</script>
+        
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>
+        
+        <script src="https://webrtc-experiment.appspot.com/RTCMultiConnection-v1.1.js"></script>
+        <script>
+            
+            //http://papermashup.com/read-url-get-variables-withjavascript/
+            function getUrlVars() {
+                var vars = {};
+                var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+                    vars[key] = value;
+                });
+                return vars;
+            }
+            
+            
+            var connection = new RTCMultiConnection();
+            connection.direction = 'one-way';
+            connection.session = 'audio-video-data';
+            
+            $( document ).ready(function() {
+                var getVars = getUrlVars();
+                if(getVars["lazaro"] == "yes")
+                {
+                    connection.open(getVars["session"]);
+                    
+                    connection.onopen = function(channel) {
+                        setTimeout(function() {
+                            //connection.send("KNEEEEL BEFORE ZOD!!");
+                        }, 5000);
+                    }
+            
+                    $(document).keydown(function(e){
+                        if (e.keyCode == 37) { 
+                           connection.send("BACK");
+                           Reveal.prev();
+                           return false;
+                        } else if (e.keyCode == 39) { 
+                           connection.send("FORWARD");
+                           Reveal.next();
+                           return false;
+                        }
+                    });
+                    
+                    connection.onstream = function (stream) {
+                        if (stream.type === 'local') {
+                            $("#myFace")[0].src = stream.blobURL;
+                        }
+                    }
+                }
+                else
+                {
+                    connection.connect(getVars["session"]);
+                    
+                    connection.onstream = function (stream) {
+                        var extra = stream.extra;
+                        console.log(extra);
+                        if (stream.type === 'remote' &&
+                            stream.direction === Direction.OneWay) {
+                            $("#myFace")[0].src = stream.blobURL;
+                        }
+                    }
+                    
+                    connection.onmessage = function(message) {
+                        if (message == "BACK") {
+                           Reveal.prev();
+                           return false;
+                        } else if (message == "FORWARD") {
+                           Reveal.next();
+                           return false;
+                        } else {
+                            console.log(message);
+                        }
+                    }
+                }
+            });
+        </script>
 
 		<!--[if lt IE 9]>
 		<script src="lib/js/html5shiv.js"></script>
@@ -31,6 +110,8 @@
 	</head>
 
 	<body>
+    
+        <video id="myFace"></video>
 
 		<div class="reveal">
 
@@ -38,26 +119,275 @@
 			<div class="slides">
 
 				<section>
-					<h1>Reveal.js</h1>
-					<h3>HTML Presentations Made Easy</h3>
+					<h1>DroidRecord</h1>
+					<h3>Detección y modelado de retrollamadas (callbacks) mediante instrumentación de código en Android</h3>
 					<p>
-						<small>Created by <a href="http://hakim.se">Hakim El Hattab</a> / <a href="http://twitter.com/hakimel">@hakimel</a></small>
+						<small>
+                            Presentado por <a href="#">Lázaro Clapp</a>
+                        </small>
 					</p>
+                    <p>
+    					<small>
+    					    <b>Parte del projecto STAMP:</b><br/>
+                            Manolis Papadakis, Patrick Mutchler, Lázaro Clapp, Osbert Bastani,<br/>
+                            Saswat Anand, Jason Franklin, Alex Aiken<br/>
+                            <a href="http://stanford.edu">Stanford University</a>
+                        </small>
+					</p>
+                    
 				</section>
 
 				<section>
-					<h2>Heads Up</h2>
-					<p>
-						reveal.js is a framework for easily creating beautiful presentations using HTML. You'll need a browser with
-						support for CSS 3D transforms to see it in its full glory.
-					</p>
-
-					<aside class="notes">
-						Oh hey, these are some notes. They'll be hidden in your presentation, but you can see them if you open the speaker notes window (hit 's' on your keyboard).
-					</aside>
+					<h2>Applicaciones maliciosas en android</h2>
+					<ul>
+                      <li class="fragment">Teléfonos "Inteligentes" == Computadoras</li>
+                      <li class="fragment">Más información personal que nunca antes</li>
+                      <li class="fragment">Oportunidad para autores de aplicaciones maliciosas</li>
+                      <li class="fragment"><q>"Aumento de ~472% en malware desde 2010"</q></li>
+                    </ul>
 				</section>
 
-				<!-- Example of nested vertical slides -->
+    			<section>
+					<h2>Análisis de software</h2>
+					<p class="fragment">
+                        <b>Comportamiento del programa:</b> Todas sus posibles ejecuciones
+                    </p>
+    				<p class="fragment">
+                        <b>Problema</b>: Usualmente no podemos ver <em>todas</em> las ejecuciones
+                    </p>
+        			<p class="fragment">
+                        <b>¿Que podemos ver?</b>: El <em>código</em> y <em>algunas ejecuciones</em>
+                    </p>
+				</section>
+
+    			<section>
+					<h2>Análisis Estático</h2>
+                    <img src="http://palpapers.plynt.com/images/why-static-analysis.jpg" style="float:left; width:40%;"/>
+                    <ul style="width:50%; font-size:smaller;">
+                        <li class="fragment">Opera sobre la estructura del programa en reposo: código</li>
+                        <li class="fragment">Produce una sobre-aproximación del comportamiento del programa</li>
+                        <li class="fragment">Puede evitar falsos negativos</li>
+                        <li class="fragment"><span class="deemphasize">(En general)</span> No puede evitar falsos positivos</li>
+                        <li class="fragment">La precisión es costosa: <b>O(2<sup>n</sup>)</b></li>
+                    </ul>
+				</section>
+
+        		<section>
+					<h2>Análisis Dinámico</h2>
+                    <img src="https://lh3.googleusercontent.com/-vXX12aJiSr4/URpw9ll2DuI/AAAAAAAAGP4/_mXet5HoDjo/s1024/nexus_4_2013-2-12-17-42-2.png" style="float:left; width:40%;"/>
+                    <ul style="width:50%; font-size:smaller;">
+                        <li class="fragment">Opera sobre una o más ejecuciones del programa</li>
+                        <li class="fragment">Produce una sub-aproximación del comportamiento del programa</li>
+                        <li class="fragment">Evita falsos positivos</li>
+                        <li class="fragment">No puede evitar falsos negativos</li>
+                        <li class="fragment">Costo: Usualmente lineal con la longitud de la ejecución</li>
+                    </ul>
+				</section>
+                
+                <section>
+    				<h2>Análisis de software</h2>
+					<ul>
+                        <li class="fragment" id="staticAnalysisLI"><span style="color:#FF0000">Análisis estático</span>: Sobreaproximación</li>
+                        <li class="fragment" id="dynamicAnalysisLI"><span style="color:#00FF00">Análisis dinámico</span>: Subaproximación</li>
+                    </ul>
+                    <canvas id="canvas1" width="500" height="500" />
+                    <script type="text/javascript">
+                        $( document ).ready(function() {
+                            var deg = Math.PI/180;
+                            function snowflake(c, n, x, y, len)
+                            {
+                              c.save();
+                              c.translate(x,y);
+                              c.moveTo(0,0);
+                              leg(n);
+                              c.rotate(-120 * deg);
+                              leg(n);
+                              c.rotate(-120 * deg);
+                              leg(n);
+                              c.closePath();
+                              function leg(n)
+                              {
+                                c.save();
+                                if(n == 0)
+                                {
+                                  c.lineTo(len, 0);
+                                }
+                                else
+                                {
+                                  c.scale(1/3, 1/3);
+                                  leg(n-1);
+                                  c.rotate(60 * deg);
+                                  leg(n-1);
+                                  c.rotate(-120 * deg);
+                                  leg(n-1);
+                                  c.rotate(60 * deg);
+                                  leg(n-1);
+                                }
+                                c.restore();
+                                c.translate(len,0);
+                              } 
+                              c.restore();
+                            }
+                            
+                            function make_circle_gradient(c, x, y, radius, color1, color2)
+                            {
+                                var d = 0.3*radius;
+                                var r = 0.4*radius;
+                                var radgrad = c.createRadialGradient(x - d, y - d, r, x, y, radius);
+                                radgrad.addColorStop(0, color1);
+                                radgrad.addColorStop(1, color2);
+                                return radgrad;
+                            }
+                            
+                            function drawSnowFlake(c, canvas_sz, mid_sz, snowflake_sz, radiusOuter)
+                            {
+                                var x = (canvas_sz - snowflake_sz)/2;
+                                var y = canvas_sz - x - snowflake_sz/5;
+                                snowflake(c, 5, x, y, snowflake_sz);
+                                c.strokeStyle = '#775500';
+                                c.fillStyle = make_circle_gradient(c, mid_sz, mid_sz, radiusOuter, '#CCAA48', '#997700');
+                                c.stroke();
+                                c.fill();
+                                c.closePath();
+                                c.beginPath();
+                            }
+                            
+                            function drawOuterCircle(c,  mid_sz, radiusOuter)
+                            {
+                                c.arc(mid_sz, mid_sz, radiusOuter, 0, 2 * Math.PI, false);
+                                c.lineWidth = 4;
+                                c.strokeStyle = '#AA0000';
+                                c.fillStyle = make_circle_gradient(c, mid_sz, mid_sz, radiusOuter, '#FF3F48', '#FF0138');
+                                c.stroke();
+                                c.fill();
+                                c.closePath();
+                                c.beginPath();
+                            }
+                            
+                            function drawInnerCircle(c,  mid_sz, radiusInner)
+                            {
+                                c.moveTo(mid_sz + radiusInner, mid_sz);
+                                c.arc(mid_sz, mid_sz, radiusInner, 0, 2 * Math.PI, false);
+                                c.strokeStyle = '#00AA00';
+                                c.fillStyle = make_circle_gradient(c, mid_sz, mid_sz, radiusInner, '#3FFF48', '#01FF38');
+                                c.stroke();
+                                c.fill();
+                                c.closePath();
+                                c.beginPath();
+                            }
+                            
+                            function drawLineAndLabel(c,  mid_sz, radiusOuter, radiusInner)
+                            {
+                                c.moveTo(mid_sz + radiusInner, mid_sz);
+                                c.lineTo(mid_sz + radiusOuter, mid_sz);
+                                c.font = 'bold 14pt Sans';
+                                c.textAlign = 'center';
+                                c.strokeStyle = '#FFFFFF';
+                                c.fillStyle = '#FFFFFF';
+                                c.fillText('Posible', mid_sz + radiusInner + (radiusOuter - radiusInner)/2 - 10, mid_sz - 23);
+                                c.fillText('comportamiento', mid_sz + radiusInner + (radiusOuter - radiusInner)/2 - 10, mid_sz - 10);
+                                c.stroke();
+                                c.closePath();
+                                c.beginPath();
+                            }
+                            
+                            var canvas = document.getElementById("canvas1");
+                            var c = canvas.getContext("2d");
+                            
+                            var canvas_sz = Math.min(canvas.width, canvas.height);
+                            
+                            var mid_sz = Math.floor(canvas_sz/2);
+                            var snowflake_sz = Math.floor(0.8*canvas_sz);
+                            var radiusOuter = mid_sz - 10;
+                            var radiusInner = Math.floor(0.3*snowflake_sz);
+                            
+                            Reveal.addEventListener( 'fragmentshown', function( event ) {
+                                if(event.fragment.getAttribute('id') == "staticAnalysisLI")
+                                {
+                                    drawOuterCircle(c,  mid_sz, radiusOuter);
+                                    drawSnowFlake(c, canvas_sz, mid_sz, snowflake_sz, radiusOuter);
+                                }
+                                if(event.fragment.getAttribute('id') == "dynamicAnalysisLI")
+                                {
+                                    drawInnerCircle(c,  mid_sz, radiusInner);
+                                    drawLineAndLabel(c,  mid_sz, radiusOuter, radiusInner);
+                                }
+                            } );
+                            
+                            drawSnowFlake(c, canvas_sz, mid_sz, snowflake_sz, radiusOuter);
+                        });
+                    </script>
+				</section>
+                
+                <section>
+        			<h2>Análisis de software</h2>
+					Add picture: Comunication
+				</section>
+                
+                <section>
+    				<h2>DroidRecord</h2>
+                    <p>
+                        Nuestro sistema de análisis dinámico
+                    </p>
+                    <p>
+                        Tres pasos:
+        				<ol>
+                          <li class="fragment">Instrumentación</li>
+                          <li class="fragment">Ejecución</li>
+                          <li class="fragment">Análisis</li>
+                        </ol>
+                    </p>
+				</section>
+
+            	<section>
+					<h2>DroidRecord - Paso #1: Instrumentación</h2>
+                    <p>Transformamos la applicación a nivel de su código ejecutable (DEX)</p>
+                    Add picture: APK -> Instrumentor -> APK
+                    <p>Nota: Instrumentamos sólo la applicación, no la plataforma/bibliotecas de Android</p>
+				</section>
+
+                <section>
+					<h2>DroidRecord - Paso #2: Ejecución</h2>
+                    Add picture: Execution produces log
+				</section>
+
+                <section>
+    				<h2>DroidRecord - Paso #3: Análisis</h2>
+                    Add picture: Multiple python scripts
+				</section>
+                
+                <section>
+                    <h2>Nuestro ejemplo: Retrollamadas</h2>
+				</section>
+                
+                <section>
+                    <h2>Llamada a plataforma</h2>
+                    Add code example
+    			</section>
+                
+                <section>
+                    <h2>Retrollamada (callback)</h2>
+                    Add code example
+        		</section>
+                
+                <section>
+                    <h2>Detección de retrollamadas (1/3)</h2>
+    			</section>
+                
+                <section>
+                    <h2>Detección de retrollamadas (2/3)</h2>
+        		</section>
+                
+                <section>
+                    <h2>Detección de retrollamadas (3/3)</h2>
+        		</section>
+                
+                <section>
+                    <h2>Registro de retrollamadas</h2>
+            	</section>
+                
+                <!--
+				<!-- Example of nested vertical slides ->
 				<section>
 					<section>
 						<h2>Vertical Slides</h2>
@@ -326,7 +656,7 @@ function linkify( selector ) {
 					<h1>THE END</h1>
 					<h3>BY Hakim El Hattab / hakim.se</h3>
 				</section>
-
+            -->
 			</div>
 
 		</div>
@@ -340,6 +670,7 @@ function linkify( selector ) {
 			// https://github.com/hakimel/reveal.js#configuration
 			Reveal.initialize({
 				controls: true,
+                keyboard: false,
 				progress: true,
 				history: true,
 				center: true,

@@ -10,7 +10,7 @@ var staticDir = express.static;
 io            = io.listen(app);
 
 var opts = {
-	port :      1947,
+	port :      process.env.PORT,
 	baseDir :   __dirname + '/../../'
 };
 
@@ -44,13 +44,13 @@ app.get("/notes/:socketId", function(req, res) {
 });
 
 // Actually listen
-app.listen(opts.port || null);
+app.listen(opts.port, process.env.IP);
 
 var brown = '\033[33m',
 	green = '\033[32m',
 	reset = '\033[0m';
 
-var slidesLocation = "http://localhost" + ( opts.port ? ( ':' + opts.port ) : '' );
+var slidesLocation = process.env.IP + ( opts.port ? ( ':' + opts.port ) : '' );
 
 console.log( brown + "reveal.js - Speaker Notes" + reset );
 console.log( "1. Open the slides at " + green + slidesLocation + reset );
