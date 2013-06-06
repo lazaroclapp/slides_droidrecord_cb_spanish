@@ -1,0 +1,57 @@
+.jimple-code {
+    text-align: left;
+    font-family: mono-space;
+    padding-left: 20px;
+    background-color: #000000;
+    font-weight: bold;
+    color: #FFFFFF;
+}
+
+.jimple-code .jimple-keyword {
+    color:rgb(195, 151, 216);
+}
+
+.jimple-code .jimple-constant {
+    color: teal;
+}
+
+.jimple-code .jimple-method {
+    color: lime;
+}
+
+.jimple-code .jimple-instrumented-line {
+    background-color: #000000;
+    background-color: rgba(255,0,0,0.4);
+    font-weight: normal;
+    font-style: italic;
+}
+
+.MethodCallRecord {
+    font-weight: bold;
+    font-family: mono-space;
+    color: #3C77D8;
+}
+
+.MethodStartRecord {
+    font-weight: bold;
+    font-family: mono-space;
+    color: #6AA84F;
+}
+
+.MethodEndRecord {
+    font-weight: bold;
+    font-family: mono-space;
+    color: #CC0000;
+}
+
+.MethodReturnRecord {
+    font-weight: bold;
+    font-family: mono-space;
+    color: #A74C78;
+}
+
+.OtherRecord {
+    font-weight: bold;
+    font-family: mono-space;
+    color: #999999;
+}

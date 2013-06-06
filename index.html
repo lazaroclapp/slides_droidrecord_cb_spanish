@@ -18,6 +18,7 @@
 		<link rel="stylesheet" href="css/theme/default.css" id="theme">
 
         <link rel="stylesheet" href="css/customcss/presentation.css"/>
+        <link rel="stylesheet" href="css/customcss/jimple.css"/>
         
 		<!-- For syntax highlighting -->
 		<link rel="stylesheet" href="lib/css/zenburn.css">
@@ -41,10 +42,11 @@
                 return vars;
             }
             
-            
             var connection = new RTCMultiConnection();
-            connection.direction = 'one-way';
+            connection.direction = 'one-to-many';
             connection.session = 'audio-video-data';
+            
+            var theirFaceLoaded = false;
             
             $( document ).ready(function() {
                 var getVars = getUrlVars();
@@ -62,17 +64,31 @@
                         if (e.keyCode == 37) { 
                            connection.send("BACK");
                            Reveal.prev();
+                           connection.send(Reveal.getIndices());
                            return false;
                         } else if (e.keyCode == 39) { 
                            connection.send("FORWARD");
                            Reveal.next();
+                           connection.send(Reveal.getIndices());
                            return false;
                         }
                     });
                     
                     connection.onstream = function (stream) {
                         if (stream.type === 'local') {
-                            $("#myFace")[0].src = stream.blobURL;
+                            var mediaElement = stream.mediaElement;
+                            mediaElement.width = 320;
+                            mediaElement.height = 240;
+                            document.getElementById('myFace').appendChild(mediaElement);
+                        }
+                        
+                        if (stream.type === 'remote' &&
+                            !theirFaceLoaded) {
+                            var mediaElement = stream.mediaElement;
+                            mediaElement.width = 320;
+                            mediaElement.height = 240;
+                            document.getElementById('theirFace').appendChild(mediaElement);
+                            theirFaceLoaded = true;
                         }
                     }
                 }
@@ -80,12 +96,12 @@
                 {
                     connection.connect(getVars["session"]);
                     
-                    connection.onstream = function (stream) {
-                        var extra = stream.extra;
-                        console.log(extra);
-                        if (stream.type === 'remote' &&
-                            stream.direction === Direction.OneWay) {
-                            $("#myFace")[0].src = stream.blobURL;
+                    connection.onstream = function(stream) {
+                        if (stream.type === 'remote') {
+                            var mediaElement = stream.mediaElement;
+                            mediaElement.width = 320;
+                            mediaElement.height = 240;
+                            document.getElementById('myFace').appendChild(mediaElement);
                         }
                     }
                     
@@ -96,6 +112,11 @@
                         } else if (message == "FORWARD") {
                            Reveal.next();
                            return false;
+                        } else if (message.h !== undefined && message.v !== undefined) {
+                            var f = message.f || 0;
+                            if(message != Reveal.getIndices()) {
+                                Reveal.slide(message.h,message.v,message.f);
+                            }
                         } else {
                             console.log(message);
                         }
@@ -103,6 +124,8 @@
                 }
             });
         </script>
+        
+        <link rel="stylesheet" href="http://yandex.st/highlightjs/7.3/styles/tomorrow-night-bright.min.css">
 
 		<!--[if lt IE 9]>
 		<script src="lib/js/html5shiv.js"></script>
@@ -111,7 +134,8 @@
 
 	<body>
     
-        <video id="myFace"></video>
+        <div id="theirFace"></div>
+        <div id="myFace"></div>
 
 		<div class="reveal">
 
@@ -174,7 +198,7 @@
 
         		<section>
 					<h2>Análisis Dinámico</h2>
-                    <img src="https://lh3.googleusercontent.com/-vXX12aJiSr4/URpw9ll2DuI/AAAAAAAAGP4/_mXet5HoDjo/s1024/nexus_4_2013-2-12-17-42-2.png" style="float:left; width:40%;"/>
+                    <div style="float:left; width:40%;"><img src="images/nexus_4_2013-2-12-17-42-2.png" style="max-height:80%; position:center;"/></div>
                     <ul style="width:50%; font-size:smaller;">
                         <li class="fragment">Opera sobre una o más ejecuciones del programa</li>
                         <li class="fragment">Produce una sub-aproximación del comportamiento del programa</li>
@@ -321,7 +345,7 @@
                 
                 <section>
         			<h2>Análisis de software</h2>
-					Add picture: Comunication
+					<img src="images/StaticDinamicSynergy.png" style="width:100%;"/>
 				</section>
                 
                 <section>
@@ -341,50 +365,175 @@
 
             	<section>
 					<h2>DroidRecord - Paso #1: Instrumentación</h2>
-                    <p>Transformamos la applicación a nivel de su código ejecutable (DEX)</p>
-                    Add picture: APK -> Instrumentor -> APK
-                    <p>Nota: Instrumentamos sólo la applicación, no la plataforma/bibliotecas de Android</p>
+                    <p class="fragment">Transformamos la applicación a nivel de su código ejecutable (DEX)</p>
+                    <p class="fragment">Nota: Instrumentamos sólo la applicación, no la plataforma/bibliotecas de Android</p>
+                    <img class="fragment" src="images/instrumentation.png" style="width:80%;"/>
 				</section>
 
                 <section>
 					<h2>DroidRecord - Paso #2: Ejecución</h2>
-                    Add picture: Execution produces log
+                    <img src="images/execute.png" style="max-heigth:60%;"/>
 				</section>
 
                 <section>
     				<h2>DroidRecord - Paso #3: Análisis</h2>
-                    Add picture: Multiple python scripts
+                    <img src="images/analysis.png" style="max-heigth:60%;"/>
 				</section>
                 
                 <section>
                     <h2>Nuestro ejemplo: Retrollamadas</h2>
+                    <ul>
+                      <li class="fragment">Es un método de la applicación que es llamado desde código que corresponde a la plataforma</li>
+                      <li class="fragment">Usados de manera extensiva en Android: onCreate(), onClick(),...</li>
+                      <li class="fragment">¡Importante! Entender las retrollamadas es fundamental para entender el ciclo de vida de la applicación</li>
+                      <li class="fragment">Modelar el ciclo de vida de la applicación: pre-requisito para múltiples analísis estáticos</li>
+                    </ul>
 				</section>
                 
                 <section>
                     <h2>Llamada a plataforma</h2>
-                    Add code example
+                    <pre><code class="language-java">
+public void myMethod(View view) {
+    ConnectivityManager connMgr = (ConnectivityManager)
+        getSystemService(Context.CONNECTIVITY_SERVICE);
+}
+                    </code></pre>
+                    <p class="fragment"><b>getSystemService</b> es una llamada a la plataforma</p>
     			</section>
                 
                 <section>
                     <h2>Retrollamada (callback)</h2>
-                    Add code example
+                    <pre><code class="language-java">
+class MyClickListener extends Button.OnClickListener {
+    public MyClickListener() {}
+    public void onClick(View v)
+    {
+        //perform action
+    }
+}
+
+rightButton.setOnClickListener(new MyClickListener());
+                </code></pre>
+                <p class="fragment"><b>setOnClickListener</b> es una llamada a la plataforma</p>
+                <p class="fragment"><b>onClick</b> es una retrollamada</p>
+                
+            	</section>
+                
+                <section>
+                    <h2>Retrollamada (callback)</h2>
+                    <pre><code class="language-java">
+rightButton.setOnClickListener(new Button.OnClickListener() {  
+    public void onClick(View v)
+    {
+        //perform action
+    }
+});
+                </code></pre>
+                <p>Código equivalente usando una subclase anónima</p>
         		</section>
                 
                 <section>
+                    <h2>Instrumentación (1/2)</h2>
+                    <p><b>JIMPLE:</b> Representación intermedia de programas en Java, similar a bytecode o Dex</p>
+                    <div class="jimple-code">
+<span class="jimple-reg">$obj</span> = ...<br/>
+<span class="jimple-reg">$a</span> = <span class="jimple-reg">$r1</span>.<span class="jimple-field">f</span><br/>
+<span class="jimple-reg">$b</span> = <span class="jimple-constant">0</span><br/>
+<span class="jimple-reg">$c</span> = <span class="jimple-keyword">invoke</span> <span class="jimple-reg">$obj</span>.<span class="jimple-method">m</span>(<span class="jimple-reg">$a</span>,<span class="jimple-reg">$b</span>)<br/>
+                    </div>
+        		</section>
+                
+                <section>
+                    <h2>Instrumentación (2/2)</h2>
+                    <div class="jimple-code">
+<span class="jimple-reg">$obj</span> = ...<br/>
+<span class="jimple-reg">$a</span> = <span class="jimple-reg">$r1</span>.<span class="jimple-field">f</span><br/>
+<span class="jimple-instrumented-line"><span class="jimple-keyword">invoke</span> <span class="jimple-reg">$TR</span>.<span class="jimple-method">recordLoad</span>(<span class="jimple-reg">$1</span>,<span class="jimple-constant">"f"</span>,<span class="jimple-reg">$a</span>)</span><br/>
+<span class="jimple-reg">$b</span> = <span class="jimple-constant">0</span><br/>
+<span class="jimple-instrumented-line"><span class="jimple-keyword">invoke</span> <span class="jimple-reg">$TR</span>.<span class="jimple-method">recordCall</span>(<span class="jimple-reg">$obj</span>,<span class="jimple-constant">"m"</span>,<span class="jimple-reg">$a</span>,<span class="jimple-reg">$b</span>)</span><br/>
+<span class="jimple-reg">$c</span> = <span class="jimple-keyword">invoke</span> <span class="jimple-reg">$obj</span>.<span class="jimple-method">m</span>(<span class="jimple-reg">$a</span>,<span class="jimple-reg">$b</span>)<br/>
+<span class="jimple-instrumented-line"><span class="jimple-keyword">invoke</span> <span class="jimple-reg">$TR</span>.<span class="jimple-method">recordReturn</span>(<span class="jimple-reg">$obj</span>,<span class="jimple-constant">"m"</span>,<span class="jimple-reg">$c</span>)</span><br/>
+                    </div>
+            	</section>
+                
+                <section>
+                    <h2>Eventos: Invocacción de Métodos</h2>
+                    <p>4 differentes eventos relacionados con llamadas a métodos son escritos al registro</p>
+                    <ul>
+                      <li class="fragment"><span class="MethodCallRecord">MethodCall m:</span> Cuando m es llamado en m2</li>
+                      <li class="fragment"><span class="MethodStartRecord">MethodStart m:</span> Cuando m comienza a ejecutarse</li>
+                      <li class="fragment"><span class="MethodEndRecord">MethodEnd m:</span> Cuando m termina de ejecutarse</li>
+                      <li class="fragment"><span class="MethodReturnRecord">MethodReturn m:</span> Justo después de que m es llamado en m2</li>
+                    </ul>
+                </section>
+                
+                <section>
+                    <h2>Eventos: Invocacción de Métodos, Ejemplo</h2>
+                    <img src="images/methodEventsExample.png" style="max-heigth:60%; -webkit-box-reflect:none"/>
+                </section>
+                
+                <section>
                     <h2>Detección de retrollamadas (1/3)</h2>
+                    <img src="images/CallbackDetection1.png" style="max-heigth:60%; -webkit-box-reflect:none"/>
     			</section>
                 
                 <section>
                     <h2>Detección de retrollamadas (2/3)</h2>
+                    <img src="images/CallbackDetection2.png" style="max-heigth:60%; -webkit-box-reflect:none"/>
+                    <p>Problema: No instrumentamos el código de la plataforma: sus eventos no aparecen en la bitácora</p>
         		</section>
                 
                 <section>
                     <h2>Detección de retrollamadas (3/3)</h2>
+                    <img src="images/CallbackDetection2.png" style="max-heigth:60%; -webkit-box-reflect:none"/>
+                    <p>Bitácora: ... <span class="OtherRecord">Record</span> <span class="MethodStartRecord">MethodStart m</span> ... <br/>
+                       <span class="fragment">con <span class="OtherRecord">Record</span> != <span class="MethodCallRecord">MethodCall m</span></span>
+                    </p> 
         		</section>
                 
                 <section>
                     <h2>Registro de retrollamadas</h2>
+                    <pre><code class="language-java">
+class MyClickListener extends Button.OnClickListener {
+    public MyClickListener() {}
+    public void onClick(View v)
+    {
+        //perform action
+    }
+}
+
+rightButton.setOnClickListener(new MyClickListener());
+                    </code></pre>
+                    <p><b>onClick</b> es una retrollamada</p>
+                    <p><b>setOnClickListener</b> es un método de registro para <b>onClick</b></p>
             	</section>
+                
+                <section>
+                    <h2>Registro de retrollamadas</h2>
+                    <blockquote>
+    					"An API Method m, that has an invocation mi, that happens before a Callback Invocation ci and takes a parameter p which is also the this parameter for ci, but not the this parameter in mi."
+					</blockquote>
+                </section>
+                
+                <section>
+                    <h2>Retrollamadas, métodos de registro y métodos relacionados</h2>
+                    <img src="images/STAMPCallbackAnalysis.png" style="max-heigth:60%;"/>
+                </section>
+                
+                <section>
+                    <h1>¿Preguntas?</h1>
+                </section>
+                
+                <section>
+                    <h1>¡Gracias!</h1>
+                </section>
+                
+                <section>
+                    <h2>Sobre esta presentación</h2>
+                    <a href="https://github.com/lazaroclapp/slides_droidrecord_cb_spanish">github.com/lazaroclapp/slides_droidrecord_cb_spanish</a>
+                    <img src="http://upload.wikimedia.org/wikipedia/commons/0/00/HTML5_logo_black.svg" style="max-heigth:25%;"/>
+                    <small>Usando: Reveal.js (Hakim El Hattab), RTCMultiConnection (Muaz Khan), jQuery (John Resig)</small>
+                </section>
                 
                 <!--
 				<!-- Example of nested vertical slides ->
@@ -669,7 +818,7 @@ function linkify( selector ) {
 			// Full list of configuration options available here:
 			// https://github.com/hakimel/reveal.js#configuration
 			Reveal.initialize({
-				controls: true,
+				controls: false,
                 keyboard: false,
 				progress: true,
 				history: true,

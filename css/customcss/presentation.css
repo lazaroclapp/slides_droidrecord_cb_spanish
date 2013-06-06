@@ -7,10 +7,25 @@ body {
     float:right;
     bottom:0;
     right:0;
-    width:20%;
-    height:30%;
-    background-color:#FF0000;
     z-index:300000;
+    opacity:0.7;
+}
+
+#theirFace {
+    position:absolute;
+    float:left;
+    bottom:0;
+    left:0;
+    z-index:300000;
+    opacity:0.7;
+}
+
+#fromThem {
+    position:absolute;
+    float:left;
+    top:0;
+    left:0;
+    color: white;
 }
 
 .deemphasize {
@@ -23,4 +38,4 @@ canvas {
 
 img {  
     -webkit-box-reflect: below 0px -webkit-linear-gradient(bottom, rgba(255,255,255,0.3) 0%, transparent 40%, transparent 100%);
-}  
+} 
